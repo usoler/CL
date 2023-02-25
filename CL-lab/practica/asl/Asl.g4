@@ -46,7 +46,7 @@ declarations
         ;
 
 variable_decl
-        : VAR ID ':' type
+        : VAR ID (',' ID)* ':' type
         ;
 
 type    : INT
