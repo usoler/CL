@@ -75,6 +75,9 @@ public:
   // antlrcpp::Any visitWriteString(AslParser::WriteStringContext *ctx);
   antlrcpp::Any visitLeft_expr(AslParser::Left_exprContext *ctx);
   antlrcpp::Any visitExprIdent(AslParser::ExprIdentContext *ctx);
+  antlrcpp::Any visitParenthesis(AslParser::ParenthesisContext *ctx);
+  antlrcpp::Any visitUnary(AslParser::UnaryContext *ctx);
+  antlrcpp::Any visitLogical(AslParser::LogicalContext *ctx);
   antlrcpp::Any visitArithmetic(AslParser::ArithmeticContext *ctx);
   antlrcpp::Any visitRelational(AslParser::RelationalContext *ctx);
   antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
@@ -105,5 +108,7 @@ private:
   void putScopeDecor    (antlr4::ParserRuleContext *ctx, SymTable::ScopeId s);
   void putTypeDecor     (antlr4::ParserRuleContext *ctx, TypesMgr::TypeId t);
   void putIsLValueDecor (antlr4::ParserRuleContext *ctx, bool b);
+  
+  TypesMgr::TypeId getTypeCoercion (TypesMgr::TypeId t1, TypesMgr::TypeId t2);
 
 };  // class TypeCheckVisitor

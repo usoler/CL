@@ -50,6 +50,9 @@ variable_decl
         ;
 
 type    : INT
+        | FLOAT
+        | BOOL
+        | CHAR
         ;
 
 statements
@@ -78,11 +81,15 @@ left_expr
         ;
 
 // Grammar for expressions with boolean, relational and aritmetic operators
-expr    : expr op=MUL expr                    # arithmetic
-        | expr op=PLUS expr                   # arithmetic
-        | expr op=EQUAL expr                  # relational
-        | INTVAL                              # value
-        | ident                               # exprIdent
+expr    : L_PAR expr R_PAR                              # parenthesis
+        | op=(NOT|PLUS|MINUS) expr                      # unary
+        | expr op=(MUL|DIV) expr                        # arithmetic
+        | expr op=(PLUS|MINUS) expr                     # arithmetic
+        | expr op=(EQUAL|DIFF|GT|LT|GTE|LTE) expr       # relational
+        | expr op=AND expr                              # logical
+        | expr op=OR expr                               # logical
+        | (INTVAL|FLOATVAL|BOOLVAL|CHARVAL)             # value
+        | ident                                         # exprIdent
         ;
 
 // Identifiers
@@ -95,10 +102,25 @@ ident   : ID
 
 ASSIGN    : '=' ;
 EQUAL     : '==' ;
+DIFF      : '!=' ;
+GT        : '>' ;
+LT        : '<' ;
+GTE       : '>=' ;
+LTE       : '<=' ;
 PLUS      : '+' ;
-MUL       : '*';
+MINUS     : '-' ;
+MUL       : '*' ;
+DIV       : '/' ;
+NOT       : 'not' ;
+AND       : 'and' ;
+OR        : 'or' ;
+L_PAR     : '(' ;
+R_PAR     : ')' ;
 VAR       : 'var';
 INT       : 'int';
+FLOAT     : 'float' ;
+BOOL      : 'bool' ;
+CHAR      : 'char';
 IF        : 'if' ;
 THEN      : 'then' ;
 ELSE      : 'else' ;
@@ -107,8 +129,12 @@ FUNC      : 'func' ;
 ENDFUNC   : 'endfunc' ;
 READ      : 'read' ;
 WRITE     : 'write' ;
-ID        : ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
 INTVAL    : ('0'..'9')+ ;
+FLOATVAL  : ('0'..'9')+ '.' ('0'..'9')+;
+BOOLVAL   : 'true' | 'false';
+CHARVAL   : '\'' ( ESC_SEQ | ~('\\'|'\'') ) '\'';
+
+ID        : ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
 
 // Strings (in quotes) with escape sequences
 STRING    : '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;
