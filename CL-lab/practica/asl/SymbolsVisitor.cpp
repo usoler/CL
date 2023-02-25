@@ -105,15 +105,27 @@ antlrcpp::Any SymbolsVisitor::visitDeclarations(AslParser::DeclarationsContext *
 
 antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext *ctx) {
   DEBUG_ENTER();
+  
+  // Visita el type
   visit(ctx->type());
-  std::string ident = ctx->ID()->getText();
-  if (Symbols.findInCurrentScope(ident)) {
-    Errors.declaredIdent(ctx->ID());
+  
+  // Coge el tipo de la declaracion de variables
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->type());
+  
+  // Para cada ID de la declaracion de variables (ID >= 1)
+  int numOfIds = ctx->ID().size();
+  for (int i = 0; i < numOfIds; ++i) {
+    // Coge el name de la variable 
+    std::string ident = ctx->ID(i)->getText();
+    // ??????
+    if (Symbols.findInCurrentScope(ident)) {
+      Errors.declaredIdent(ctx->ID(0));
+    } else {
+      // Guarda el identificador como variable con su tipo
+      Symbols.addLocalVar(ident, t1);
+    }
   }
-  else {
-    TypesMgr::TypeId t1 = getTypeDecor(ctx->type());
-    Symbols.addLocalVar(ident, t1);
-  }
+  
   DEBUG_EXIT();
   return 0;
 }
