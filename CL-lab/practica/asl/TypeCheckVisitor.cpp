@@ -84,11 +84,22 @@ antlrcpp::Any TypeCheckVisitor::visitProgram(AslParser::ProgramContext *ctx) {
 
 antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
+  
   SymTable::ScopeId sc = getScopeDecor(ctx);
   Symbols.pushThisScope(sc);
   // Symbols.print();
+  
+  // Actualmente solo puede tener tipo 'void'
+  TypesMgr::TypeId t1 = Types.createVoidTy();
+  
+  // Setea el tipo de la funcion
+  setCurrentFunctionTy(t1);
+  
+  // Visita los statements de la funcion
   visit(ctx->statements());
+  
   Symbols.popScope();
+  
   DEBUG_EXIT();
   return 0;
 }
@@ -138,13 +149,70 @@ antlrcpp::Any TypeCheckVisitor::visitAssignStmt(AslParser::AssignStmtContext *ct
 
 antlrcpp::Any TypeCheckVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   DEBUG_ENTER();
+  
+  // Visita la expresion
   visit(ctx->expr());
+  // Coge el tipo de la expresion
   TypesMgr::TypeId t1 = getTypeDecor(ctx->expr());
+  
+  // Comprueba si el tipo de la expresion no es tipo error ni tipo boolean, entonces saca error
   if ((not Types.isErrorTy(t1)) and (not Types.isBooleanTy(t1)))
     Errors.booleanRequired(ctx);
-  visit(ctx->statements());
+  
+  // Visita los statements del THEN
+  visit(ctx->statements(0));
+  
+  // Comprueba si tiene statements del ELSE, entonces visita sus statements
+  if (ctx->statements().size() > 1) {
+    visit(ctx->statements(1));
+  }
+  
   DEBUG_EXIT();
   return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitWhileStmt(AslParser::WhileStmtContext *ctx) {
+  DEBUG_ENTER();
+  
+  // Visita la expresion
+  visit(ctx->expr());
+  // Coge el tipo de la expresion
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->expr());
+  
+  // Comprueba si el tipo de la expresion no es tipo error ni tipo boolean, entonces saca error
+  if ((not Types.isErrorTy(t1)) and (not Types.isBooleanTy(t1)))
+    Errors.booleanRequired(ctx);
+  
+  // Visita los statements del DO
+  visit(ctx->statements());
+  
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx) {
+    DEBUG_ENTER();
+    
+    // Setea por defecto el tipo 'void'
+    TypesMgr::TypeId t1 = Types.createVoidTy();
+    
+    // Comprueba si contiene alguna expresion
+    if (ctx->expr()) {
+      // Coge el tipo de la expresion
+      visit(ctx->expr());
+      t1 = getTypeDecor(ctx->expr());
+    }
+    
+    // Coge el tipo de la funcion donde se llama este return
+    TypesMgr::TypeId t2 = getCurrentFunctionTy();
+    
+    // Comprueba si son del mismo tipo, si no entonces lanza error
+    if (not Types.copyableTypes(t1,t2)) {
+        Errors.incompatibleReturn(ctx->RETURN());
+    }
+    
+    DEBUG_EXIT();
+    return 0;
 }
 
 antlrcpp::Any TypeCheckVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
