@@ -89,8 +89,8 @@ antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   Symbols.pushThisScope(sc);
   // Symbols.print();
   
-  // Actualmente solo puede tener tipo 'void'
-  TypesMgr::TypeId t1 = Types.createVoidTy();
+  // Coge el tipo de la funcion
+  TypesMgr::TypeId t1 = getTypeDecor(ctx);
   
   // Setea el tipo de la funcion
   setCurrentFunctionTy(t1);
@@ -202,13 +202,18 @@ antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ct
       visit(ctx->expr());
       t1 = getTypeDecor(ctx->expr());
     }
-    
-    // Coge el tipo de la funcion donde se llama este return
+
+    // Coge el tipo de la funcion (tipos vectores, tipo return)
     TypesMgr::TypeId t2 = getCurrentFunctionTy();
-    
-    // Comprueba si son del mismo tipo, si no entonces lanza error
-    if (not Types.copyableTypes(t1,t2)) {
-        Errors.incompatibleReturn(ctx->RETURN());
+    // Comprueba que la funcion no tenga tipo 'error'
+    if (not Types.isErrorTy(t2)) {
+      // Coge el tipo de return
+      TypesMgr::TypeId ret = Types.getFuncReturnType(t2);
+
+      // Comprueba si son del mismo tipo, si no entonces lanza error
+      if (not Types.copyableTypes(t1,ret)) {
+          Errors.incompatibleReturn(ctx->RETURN());
+      }
     }
     
     DEBUG_EXIT();

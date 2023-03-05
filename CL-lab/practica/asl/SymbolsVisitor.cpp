@@ -76,22 +76,78 @@ antlrcpp::Any SymbolsVisitor::visitProgram(AslParser::ProgramContext *ctx) {
 
 antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
+  // WARNING: SI SE MUEVE NO VA   --------------------------------------------------------
   std::string funcName = ctx->ID()->getText();
   SymTable::ScopeId sc = Symbols.pushNewScope(funcName);
   putScopeDecor(ctx, sc);
+  
+  // Handle type for 'parameter' values 
+  std::vector<TypesMgr::TypeId> lParamsTy;
+  // Comprueba si la funcion tiene parametros
+  if (ctx->parameters()) {
+    // Visita los parametros
+    visit(ctx->parameters());
+    // Coge el tipo de los parametros
+    // TODO: TASK-04] ADD to lParamsTy
+  }
+  
   visit(ctx->declarations());
-  // Symbols.print();
+  
+  //Symbols.print();
   Symbols.popScope();
+  // --------------------------------------------------------------------------------------
+  
   std::string ident = ctx->ID()->getText();
   if (Symbols.findInCurrentScope(ident)) {
     Errors.declaredIdent(ctx->ID());
   }
   else {
-    std::vector<TypesMgr::TypeId> lParamsTy;
+    // Handle type for 'return' value
+    // Asigna por defecto el tipo de return a 'void'
     TypesMgr::TypeId tRet = Types.createVoidTy();
+    // Comprueba si la funcion tiene valor de 'return'
+    if (ctx->type()) {
+        // Visita el type
+        visit(ctx->type());
+        // Coge el tipo del return correspondiente
+        tRet = getTypeDecor(ctx->type());
+    }
+    
+    // Asigna los types de los parametros y el valor return de la function
     TypesMgr::TypeId tFunc = Types.createFunctionTy(lParamsTy, tRet);
+    
+    putTypeDecor(ctx, tFunc);
+    
+    // Añade la funcion en la tabla de simbolos
     Symbols.addFunction(ident, tFunc);
   }
+  
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any SymbolsVisitor::visitParameters(AslParser::ParametersContext *ctx) {
+  DEBUG_ENTER();
+  visitChildren(ctx);
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any SymbolsVisitor::visitParameter(AslParser::ParameterContext *ctx) {
+  DEBUG_ENTER();
+  std::string ident = ctx->ID()->getText();
+  if (Symbols.findInCurrentScope(ident)) {
+    Errors.declaredIdent(ctx->ID());
+  }
+  else {
+    // Visita el type
+    visit(ctx->type());
+    // Coge el tipo del parametro
+    TypesMgr::TypeId t1 = getTypeDecor(ctx->type());
+    // Guarda el parametro en la tabla de simbolos
+    Symbols.addParameter(ident, t1);
+  }
+  
   DEBUG_EXIT();
   return 0;
 }
@@ -119,7 +175,7 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
     std::string ident = ctx->ID(i)->getText();
     // ??????
     if (Symbols.findInCurrentScope(ident)) {
-      Errors.declaredIdent(ctx->ID(0));
+      Errors.declaredIdent(ctx->ID(i));
     } else {
       // Guarda el identificador como variable con su tipo
       Symbols.addLocalVar(ident, t1);
