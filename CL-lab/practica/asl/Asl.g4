@@ -87,7 +87,8 @@ statement
 
 // Grammar for left expressions (l-values in C++)
 left_expr
-        : ident
+        : ident                                         # leftExprIdent
+        | array                                         # leftArrayAccess
         ;
 
 // Grammar for expressions with boolean, relational and aritmetic operators
@@ -98,6 +99,7 @@ expr    : L_PAR expr R_PAR                              # parenthesis
         | expr op=(EQUAL|DIFF|GT|LT|GTE|LTE) expr       # relational
         | expr op=AND expr                              # logical
         | expr op=OR expr                               # logical
+        | array                                         # arrayAccess
         | (INTVAL|FLOATVAL|BOOLVAL|CHARVAL)             # value
         | ident                                         # exprIdent
         ;
@@ -105,6 +107,9 @@ expr    : L_PAR expr R_PAR                              # parenthesis
 // Identifiers
 ident   : ID
         ;
+        
+array : ident '[' expr ']'
+      ;
 
 //////////////////////////////////////////////////
 /// Lexer Rules

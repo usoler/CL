@@ -261,13 +261,42 @@ antlrcpp::Any TypeCheckVisitor::visitWriteExpr(AslParser::WriteExprContext *ctx)
 //   return r;
 // }
 
-antlrcpp::Any TypeCheckVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx) {
+antlrcpp::Any TypeCheckVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx) {
   DEBUG_ENTER();
-  visit(ctx->ident());
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  
+  // Visita el identificador
+  visit(ctx->array());
+  
+  // Coge el tipo del identificador
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->array());
+  
+  // Asigna el mismo tipo del identificador al ArrayAccess
   putTypeDecor(ctx, t1);
-  bool b = getIsLValueDecor(ctx->ident());
+  
+  // Coge el isLValue del identificador
+  bool b = getIsLValueDecor(ctx->array());
+  
+  // Asigna el mismo isLValue del identificador al ArrayAccess
   putIsLValueDecor(ctx, b);
+  
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitArrayAccess(AslParser::ArrayAccessContext *ctx) {
+  DEBUG_ENTER();
+  
+  // Visita el identificador
+  visit(ctx->array());
+  
+  // Asigna el mismo tipo del identificador al ArrayAccess
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->array());
+  putTypeDecor(ctx, t1);
+  
+  // Asigna el mismo isLValue del identificador al ArrayAccess
+  bool b = getIsLValueDecor(ctx->array());  
+  putIsLValueDecor(ctx, b);
+  
   DEBUG_EXIT();
   return 0;
 }
@@ -406,13 +435,38 @@ antlrcpp::Any TypeCheckVisitor::visitValue(AslParser::ValueContext *ctx) {
   return 0;
 }
 
-antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
+antlrcpp::Any TypeCheckVisitor::visitLeftExprIdent(AslParser::LeftExprIdentContext *ctx) {
   DEBUG_ENTER();
+  
+  // Visita el identificador
   visit(ctx->ident());
+  
+  // Asigna el mismo tipo que el del identificador
   TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
   putTypeDecor(ctx, t1);
+  
+  // Asigna el mismo isLValue que el del identificador
   bool b = getIsLValueDecor(ctx->ident());
   putIsLValueDecor(ctx, b);
+  
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
+  DEBUG_ENTER();
+  
+  // Visita el identificador
+  visit(ctx->ident());
+  
+  // Asigna el mismo tipo que el del identificador
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  putTypeDecor(ctx, t1);
+  
+  // Asigna el mismo isLValue que el del identificador
+  bool b = getIsLValueDecor(ctx->ident());
+  putIsLValueDecor(ctx, b);
+  
   DEBUG_EXIT();
   return 0;
 }
@@ -438,6 +492,47 @@ antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitArray(AslParser::ArrayContext *ctx) {
+    DEBUG_ENTER();
+    
+    // Visita el identificador
+    visit(ctx->ident());
+    
+    // Coge el tipo del identificador
+    TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+    
+    // Comprueba si no es un tipo error ni un tipo array, entonces lanza error
+    if (not Types.isErrorTy(t1) and not Types.isArrayTy(t1)) {
+        Errors.nonArrayInArrayAccess(ctx);
+    }
+    
+    // Visita la expresion
+    visit(ctx->expr());
+    
+    // Coge el tipo de la expresion
+    TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
+    
+    // Comprueba si no es un tipo error ni un tipo entero
+    if (not Types.isErrorTy(t2) and not Types.isIntegerTy(t2)) {
+        Errors.nonIntegerIndexInArrayAccess(ctx->expr());
+    }
+    
+    // Asigna el tipo y si es isLValue al array
+    TypesMgr::TypeId t3 = Types.createErrorTy();
+    bool isLValue = false;
+    
+    if (Types.isArrayTy(t1)) {
+        t3 = Types.getArrayElemType(t1);
+        isLValue = true;
+    }
+    
+    putTypeDecor(ctx, t3);
+    putIsLValueDecor(ctx, isLValue);
+    
+    
+    DEBUG_EXIT();
+    return 0;
+}
 
 // Getters for the necessary tree node atributes:
 //   Scope, Type ans IsLValue
