@@ -209,13 +209,6 @@ antlrcpp::Any CodeGenVisitor::visitWriteString(AslParser::WriteStringContext *ct
   return code;
 }
 
-antlrcpp::Any CodeGenVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx) {
-  DEBUG_ENTER();
-  CodeAttribs && codAts = visit(ctx->ident());
-  DEBUG_EXIT();
-  return codAts;
-}
-
 antlrcpp::Any CodeGenVisitor::visitArithmetic(AslParser::ArithmeticContext *ctx) {
   DEBUG_ENTER();
   CodeAttribs     && codAt1 = visit(ctx->expr(0));
@@ -274,12 +267,41 @@ antlrcpp::Any CodeGenVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
   return codAts;
 }
 
+antlrcpp::Any CodeGenVisitor::visitLeftExprIdent(AslParser::LeftExprIdentContext *ctx) {
+  DEBUG_ENTER();
+  CodeAttribs && codAts = visit(ctx->ident());
+  DEBUG_EXIT();
+  return codAts;
+}
+
+antlrcpp::Any CodeGenVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx) {
+  DEBUG_ENTER();
+  CodeAttribs && codAts = visit(ctx->array());
+  DEBUG_EXIT();
+  return codAts;
+}
+
+antlrcpp::Any CodeGenVisitor::visitArrayAccess(AslParser::ArrayAccessContext *ctx) {
+  DEBUG_ENTER();
+  CodeAttribs && codAts = visit(ctx->array());
+  DEBUG_EXIT();
+  return codAts;
+}
+
 antlrcpp::Any CodeGenVisitor::visitIdent(AslParser::IdentContext *ctx) {
   DEBUG_ENTER();
   CodeAttribs codAts(ctx->ID()->getText(), "", instructionList());
   DEBUG_EXIT();
   return codAts;
 }
+
+antlrcpp::Any CodeGenVisitor::visitArray(AslParser::ArrayContext *ctx) {
+  DEBUG_ENTER();
+    
+  DEBUG_EXIT();
+  return 0;
+}
+
 
 
 // Getters for the necessary tree node atributes:
