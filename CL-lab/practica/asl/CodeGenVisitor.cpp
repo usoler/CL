@@ -166,10 +166,12 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
 
 antlrcpp::Any CodeGenVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
   DEBUG_ENTER();
+  
   instructionList code;
   // std::string name = ctx->ident()->ID()->getSymbol()->getText();
-  std::string name = ctx->ident()->getText();
-  code = instruction::CALL(name);
+  //std::string name = ctx->ident()->getText();
+  //code = instruction::CALL(name);
+  
   DEBUG_EXIT();
   return code;
 }
