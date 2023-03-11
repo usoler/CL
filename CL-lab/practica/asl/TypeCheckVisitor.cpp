@@ -222,11 +222,7 @@ antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ct
 
 antlrcpp::Any TypeCheckVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
   DEBUG_ENTER();
-  visit(ctx->ident());
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  if (not Types.isFunctionTy(t1) and not Types.isErrorTy(t1)) {
-    Errors.isNotCallable(ctx->ident());
-  }
+  visitChildren(ctx);
   DEBUG_EXIT();
   return 0;
 }
@@ -473,18 +469,21 @@ antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx)
 
 antlrcpp::Any TypeCheckVisitor::visitExprFunc(AslParser::ExprFuncContext *ctx) {
   DEBUG_ENTER();
-  
   // Visita el function_call
   visit(ctx->function_call());
+
+  TypesMgr::TypeId tFunc = getTypeDecor(ctx->function_call());
+  bool b = getIsLValueDecor(ctx->function_call());;
   
-  // Asigna el mismo tipo que el del function_call
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->function_call());
-  putTypeDecor(ctx, t1);
+  if (Types.isVoidTy(tFunc)) {
+    Errors.isNotFunction(ctx->function_call());
+    tFunc = Types.createErrorTy();
+    b = false;
+  }
   
-  // Asigna el mismo isLValue que el del function_call
-  bool b = getIsLValueDecor(ctx->function_call());
+  putTypeDecor(ctx, tFunc);
   putIsLValueDecor(ctx, b);
-  
+
   DEBUG_EXIT();
   return 0;
 }
@@ -518,18 +517,26 @@ antlrcpp::Any TypeCheckVisitor::visitFunction_call(AslParser::Function_callConte
   
   // Asigna el mismo tipo que el del identificador
   TypesMgr::TypeId tFunc = getTypeDecor(ctx->ident());
-  TypesMgr::TypeId tRet = Types.getFuncReturnType(tFunc);
-  putTypeDecor(ctx, tRet);
   
-  // Asigna el mismo isLValue que el del identificador
-  bool b = getIsLValueDecor(ctx->ident());
-  putIsLValueDecor(ctx, b);
+  // Comprueba si no es un tipo funcion o un tipo error, entonces lanza error
+  if (not Types.isFunctionTy(tFunc) and not Types.isErrorTy(tFunc)) {
+    Errors.isNotCallable(ctx->ident());
+  }
   
-  // Visita cada expr
-  int numOfExpr = Types.getNumOfParameters(tFunc);
-  for (int i=0; i<numOfExpr; ++i) {
-    // Visita la expr
-    visit(ctx->expr(i));
+  if (Types.isFunctionTy(tFunc) and not Types.isErrorTy(tFunc)) {
+    TypesMgr::TypeId tRet = Types.getFuncReturnType(tFunc);
+    putTypeDecor(ctx, tRet);
+    
+    // Asigna el mismo isLValue que el del identificador
+    bool b = getIsLValueDecor(ctx->ident());
+    putIsLValueDecor(ctx, b);
+    
+    // Visita cada expr
+    int numOfExpr = Types.getNumOfParameters(tFunc);
+    for (int i=0; i<numOfExpr; ++i) {
+      // Visita la expr
+      visit(ctx->expr(i));
+    }
   }
   
   DEBUG_EXIT();
