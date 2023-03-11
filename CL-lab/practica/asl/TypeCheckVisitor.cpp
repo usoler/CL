@@ -471,6 +471,24 @@ antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx)
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitExprFunc(AslParser::ExprFuncContext *ctx) {
+  DEBUG_ENTER();
+  
+  // Visita el function_call
+  visit(ctx->function_call());
+  
+  // Asigna el mismo tipo que el del function_call
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->function_call());
+  putTypeDecor(ctx, t1);
+  
+  // Asigna el mismo isLValue que el del function_call
+  bool b = getIsLValueDecor(ctx->function_call());
+  putIsLValueDecor(ctx, b);
+  
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
   DEBUG_ENTER();
   std::string ident = ctx->getText();
@@ -488,6 +506,24 @@ antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
     else
       putIsLValueDecor(ctx, true);
   }
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitFunction_call(AslParser::Function_callContext *ctx) {
+  DEBUG_ENTER();
+  
+  // Visita el identificador
+  visit(ctx->ident());
+  
+  // Asigna el mismo tipo que el del identificador
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  putTypeDecor(ctx, t1);
+  
+  // Asigna el mismo isLValue que el del identificador
+  bool b = getIsLValueDecor(ctx->ident());
+  putIsLValueDecor(ctx, b);
+  
   DEBUG_EXIT();
   return 0;
 }

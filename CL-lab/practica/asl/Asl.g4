@@ -93,6 +93,7 @@ left_expr
 
 // Grammar for expressions with boolean, relational and aritmetic operators
 expr    : L_PAR expr R_PAR                              # parenthesis
+        | function_call                                 # exprFunc
         | op=(NOT|PLUS|MINUS) expr                      # unary
         | expr op=(MUL|DIV) expr                        # arithmetic
         | expr op=(PLUS|MINUS) expr                     # arithmetic
@@ -110,6 +111,9 @@ ident   : ID
         
 array : ident '[' expr ']'
       ;
+      
+function_call : ident '(' ')'
+              ;
 
 //////////////////////////////////////////////////
 /// Lexer Rules
