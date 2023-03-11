@@ -84,11 +84,22 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   // Handle type for 'parameter' values 
   std::vector<TypesMgr::TypeId> lParamsTy;
   // Comprueba si la funcion tiene parametros
-  if (ctx->parameters()) {
+  //if (ctx->parameters()) {
     // Visita los parametros
-    visit(ctx->parameters());
+    //visit(ctx->parameters());
     // Coge el tipo de los parametros
     // TODO: TASK-04] ADD to lParamsTy
+  //}
+  int numOfParameters = ctx->parameter().size();
+  for (int i=0; i<numOfParameters; ++i) {
+    // Visita el parametro
+    visit(ctx->parameter(i));
+    
+    // Coge el tipo del parametro
+    TypesMgr::TypeId tParam = getTypeDecor(ctx->parameter(i));
+    
+    // Añade el tipo del parametro a la lista
+    lParamsTy.push_back(tParam);
   }
   
   visit(ctx->declarations());
@@ -126,12 +137,12 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   return 0;
 }
 
-antlrcpp::Any SymbolsVisitor::visitParameters(AslParser::ParametersContext *ctx) {
-  DEBUG_ENTER();
-  visitChildren(ctx);
-  DEBUG_EXIT();
-  return 0;
-}
+// antlrcpp::Any SymbolsVisitor::visitParameters(AslParser::ParametersContext *ctx) {
+//   DEBUG_ENTER();
+//   visitChildren(ctx);
+//   DEBUG_EXIT();
+//   return 0;
+// }
 
 antlrcpp::Any SymbolsVisitor::visitParameter(AslParser::ParameterContext *ctx) {
   DEBUG_ENTER();
