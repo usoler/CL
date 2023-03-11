@@ -37,13 +37,16 @@ program : function+ EOF
         ;
 
 // A function has a name, a list of parameters and a list of statements
+//function
+//        : FUNC ID '(' (parameters)? ')' (':' type)? declarations statements ENDFUNC
+//        ;
 function
-        : FUNC ID '(' (parameters)? ')' (':' type)? declarations statements ENDFUNC
+        : FUNC ID '(' ( parameter (',' parameter)* )? ')' (':' type)? declarations statements ENDFUNC
         ;
         
-parameters
-        : parameter (',' parameter)*
-        ;
+//parameters
+//        : parameter (',' parameter)*
+//        ;
         
 parameter
         : ID ':' type
@@ -112,7 +115,7 @@ ident   : ID
 array : ident '[' expr ']'
       ;
       
-function_call : ident '(' ')'
+function_call : ident '(' ( expr (',' expr)* )? ')'
               ;
 
 //////////////////////////////////////////////////

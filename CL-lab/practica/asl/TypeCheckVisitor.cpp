@@ -517,12 +517,20 @@ antlrcpp::Any TypeCheckVisitor::visitFunction_call(AslParser::Function_callConte
   visit(ctx->ident());
   
   // Asigna el mismo tipo que el del identificador
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  putTypeDecor(ctx, t1);
+  TypesMgr::TypeId tFunc = getTypeDecor(ctx->ident());
+  TypesMgr::TypeId tRet = Types.getFuncReturnType(tFunc);
+  putTypeDecor(ctx, tRet);
   
   // Asigna el mismo isLValue que el del identificador
   bool b = getIsLValueDecor(ctx->ident());
   putIsLValueDecor(ctx, b);
+  
+  // Visita cada expr
+  int numOfExpr = Types.getNumOfParameters(tFunc);
+  for (int i=0; i<numOfExpr; ++i) {
+    // Visita la expr
+    visit(ctx->expr(i));
+  }
   
   DEBUG_EXIT();
   return 0;
