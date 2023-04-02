@@ -117,11 +117,11 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
     // Asigna por defecto el tipo de return a 'void'
     TypesMgr::TypeId tRet = Types.createVoidTy();
     // Comprueba si la funcion tiene valor de 'return'
-    if (ctx->type()) {
+    if (ctx->basic_type()) {
         // Visita el type
-        visit(ctx->type());
+        visit(ctx->basic_type());
         // Coge el tipo del return correspondiente
-        tRet = getTypeDecor(ctx->type());
+        tRet = getTypeDecor(ctx->basic_type());
     }
     
     // Asigna los types de los parametros y el valor return de la function
@@ -198,6 +198,29 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
 }
 
 antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
+  DEBUG_ENTER();
+  
+  // Visita el basic type
+  visit(ctx->basic_type());
+  
+  // Coge el tipo del elemento
+  TypesMgr::TypeId t = getTypeDecor(ctx->basic_type());
+  
+  if (ctx->ARRAY()) {
+    // Coge el tamanyo del array
+    unsigned int size = std::stoi(ctx->INTVAL()->getText());
+    
+    // Construye el array con el tamanyo y el tipo de elemento
+    t = Types.createArrayTy(size, t);
+  }
+  
+  putTypeDecor(ctx, t);
+  
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any SymbolsVisitor::visitBasic_type(AslParser::Basic_typeContext *ctx) {
   DEBUG_ENTER();
   
   if (ctx->INT()) {
