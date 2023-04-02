@@ -345,13 +345,22 @@ antlrcpp::Any TypeCheckVisitor::visitArithmetic(AslParser::ArithmeticContext *ct
   visit(ctx->expr(1));
   TypesMgr::TypeId t2 = getTypeDecor(ctx->expr(1));
   
-  // Comprueba si los tipos de las expresiones no son tipo error ni tipo numerico, entonces saca error
-  if (((not Types.isErrorTy(t1)) and (not Types.isNumericTy(t1))) or
-      ((not Types.isErrorTy(t2)) and (not Types.isNumericTy(t2))))
-    Errors.incompatibleOperator(ctx->op);
+  TypesMgr::TypeId t = Types.createIntegerTy();
   
-  // El tipo del resultado es tipo entero/float
-  TypesMgr::TypeId t = getTypeCoercion(t1, t2);
+  if (ctx->op->getText() == "%") {
+    if (((not Types.isErrorTy(t1)) and (not Types.isIntegerTy(t1))) or
+        ((not Types.isErrorTy(t2)) and (not Types.isIntegerTy(t2))))
+      Errors.incompatibleOperator(ctx->op);
+  } else {
+    // Comprueba si los tipos de las expresiones no son tipo error ni tipo numerico, entonces saca error
+    if (((not Types.isErrorTy(t1)) and (not Types.isNumericTy(t1))) or
+        ((not Types.isErrorTy(t2)) and (not Types.isNumericTy(t2))))
+      Errors.incompatibleOperator(ctx->op);
+    
+    // El tipo del resultado es tipo entero/float
+    t = getTypeCoercion(t1, t2);
+  }
+  
   putTypeDecor(ctx, t);
   putIsLValueDecor(ctx, false);
   
