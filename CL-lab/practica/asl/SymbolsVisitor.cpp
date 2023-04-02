@@ -83,13 +83,7 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   
   // Handle type for 'parameter' values 
   std::vector<TypesMgr::TypeId> lParamsTy;
-  // Comprueba si la funcion tiene parametros
-  //if (ctx->parameters()) {
-    // Visita los parametros
-    //visit(ctx->parameters());
-    // Coge el tipo de los parametros
-    // TODO: TASK-04] ADD to lParamsTy
-  //}
+
   int numOfParameters = ctx->parameter().size();
   for (int i=0; i<numOfParameters; ++i) {
     // Visita el parametro
@@ -153,8 +147,11 @@ antlrcpp::Any SymbolsVisitor::visitParameter(AslParser::ParameterContext *ctx) {
   else {
     // Visita el type
     visit(ctx->type());
+    
     // Coge el tipo del parametro
     TypesMgr::TypeId t1 = getTypeDecor(ctx->type());
+    putTypeDecor(ctx, t1);
+    
     // Guarda el parametro en la tabla de simbolos
     Symbols.addParameter(ident, t1);
   }

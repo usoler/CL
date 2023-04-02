@@ -536,6 +536,17 @@ antlrcpp::Any TypeCheckVisitor::visitFunction_call(AslParser::Function_callConte
     for (int i=0; i<numOfExpr; ++i) {
       // Visita la expr
       visit(ctx->expr(i));
+      
+      // Coge el tipo de la expresion
+      TypesMgr::TypeId tExpr = getTypeDecor(ctx->expr(i));
+      
+      // Coge el tipo del argumento formal
+      TypesMgr::TypeId tArg = Types.getParameterType(tFunc, i);
+      
+      // Comprueba si son del mismo tipo, si no entonces lanza error
+      if (not Types.isErrorTy(tExpr) and not Types.copyableTypes(tArg, tExpr)) {
+          Errors.incompatibleParameter(ctx->expr(i), i+1, ctx);
+      }
     }
   }
   
