@@ -211,7 +211,7 @@ antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ct
       TypesMgr::TypeId ret = Types.getFuncReturnType(t2);
 
       // Comprueba si son del mismo tipo, si no entonces lanza error
-      if (not Types.copyableTypes(t1,ret)) {
+      if (not Types.copyableTypes(ret,t1)) {
           Errors.incompatibleReturn(ctx->RETURN());
       }
     }
