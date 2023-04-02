@@ -41,7 +41,7 @@ program : function+ EOF
 //        : FUNC ID '(' (parameters)? ')' (':' type)? declarations statements ENDFUNC
 //        ;
 function
-        : FUNC ID '(' ( parameter (',' parameter)* )? ')' (':' type)? declarations statements ENDFUNC
+        : FUNC ID '(' ( parameter (',' parameter)* )? ')' (':' basic_type)? declarations statements ENDFUNC
         ;
         
 //parameters
@@ -60,7 +60,13 @@ variable_decl
         : VAR ID (',' ID)* ':' type
         ;
 
-type    : INT
+type    
+        : ARRAY '[' INTVAL ']' OF basic_type
+        | basic_type
+        ;
+        
+basic_type      
+        : INT
         | FLOAT
         | BOOL
         | CHAR
@@ -155,6 +161,8 @@ FUNC      : 'func' ;
 ENDFUNC   : 'endfunc' ;
 READ      : 'read' ;
 WRITE     : 'write' ;
+ARRAY     : 'array' ;
+OF        : 'of' ;
 INTVAL    : ('0'..'9')+ ;
 FLOATVAL  : ('0'..'9')+ '.' ('0'..'9')+;
 BOOLVAL   : 'true' | 'false';
