@@ -102,11 +102,9 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   Symbols.popScope();
   // --------------------------------------------------------------------------------------
   
-  std::string ident = ctx->ID()->getText();
-  if (Symbols.findInCurrentScope(ident)) {
+  if (Symbols.findInCurrentScope(funcName)) {
     Errors.declaredIdent(ctx->ID());
-  }
-  else {
+  } else {
     // Handle type for 'return' value
     // Asigna por defecto el tipo de return a 'void'
     TypesMgr::TypeId tRet = Types.createVoidTy();
@@ -124,27 +122,19 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
     putTypeDecor(ctx, tFunc);
     
     // Añade la funcion en la tabla de simbolos
-    Symbols.addFunction(ident, tFunc);
+    Symbols.addFunction(funcName, tFunc);
   }
   
   DEBUG_EXIT();
   return 0;
 }
 
-// antlrcpp::Any SymbolsVisitor::visitParameters(AslParser::ParametersContext *ctx) {
-//   DEBUG_ENTER();
-//   visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return 0;
-// }
-
 antlrcpp::Any SymbolsVisitor::visitParameter(AslParser::ParameterContext *ctx) {
   DEBUG_ENTER();
   std::string ident = ctx->ID()->getText();
   if (Symbols.findInCurrentScope(ident)) {
     Errors.declaredIdent(ctx->ID());
-  }
-  else {
+  } else {
     // Visita el type
     visit(ctx->type());
     
@@ -181,7 +171,7 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
   for (int i = 0; i < numOfIds; ++i) {
     // Coge el name de la variable 
     std::string ident = ctx->ID(i)->getText();
-    // ??????
+
     if (Symbols.findInCurrentScope(ident)) {
       Errors.declaredIdent(ctx->ID(i));
     } else {
@@ -197,21 +187,22 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
 antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
   DEBUG_ENTER();
   
-  // Visita el basic type
-  visit(ctx->basic_type());
+  if (ctx->ARRAY()) { // case: array type
+    visit(ctx->basic_type());
+    TypesMgr::TypeId tElem = getTypeDecor(ctx->basic_type());
   
-  // Coge el tipo del elemento
-  TypesMgr::TypeId t = getTypeDecor(ctx->basic_type());
-  
-  if (ctx->ARRAY()) {
     // Coge el tamanyo del array
     unsigned int size = std::stoi(ctx->INTVAL()->getText());
     
     // Construye el array con el tamanyo y el tipo de elemento
-    t = Types.createArrayTy(size, t);
-  }
+    TypesMgr::TypeId tArr = Types.createArrayTy(size, tElem);
+    putTypeDecor(ctx, tArr);
+  } else { // case: basic type
+    visit(ctx->basic_type());
   
-  putTypeDecor(ctx, t);
+    TypesMgr::TypeId t = getTypeDecor(ctx->basic_type());
+    putTypeDecor(ctx, t);
+  }
   
   DEBUG_EXIT();
   return 0;
@@ -237,98 +228,6 @@ antlrcpp::Any SymbolsVisitor::visitBasic_type(AslParser::Basic_typeContext *ctx)
   DEBUG_EXIT();
   return 0;
 }
-
-// antlrcpp::Any SymbolsVisitor::visitStatements(AslParser::StatementsContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitReadStmt(AslParser::ReadStmtContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitWriteExpr(AslParser::WriteExprContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitWriteString(AslParser::WriteStringContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitArithmetic(AslParser::ArithmeticContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitRelational(AslParser::RelationalContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitValue(AslParser::ValueContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
-// antlrcpp::Any SymbolsVisitor::visitIdent(AslParser::IdentContext *ctx) {
-//   DEBUG_ENTER();
-//   antlrcpp::Any r = visitChildren(ctx);
-//   DEBUG_EXIT();
-//   return r;
-// }
-
 
 // Getters for the necessary tree node atributes:
 //   Scope and Type

@@ -1,0 +1,8 @@
+Line 7:9 error: Operator '+' with incompatible types.
+Line 7:12 error: Identifier 'x' is undeclared.
+Line 8:6 error: Pointer access to a non pointer operand.
+Line 10:4 error: Assignment with incompatible types.
+Line 10:8 error: Operator '+' with incompatible types.
+Line 13:15 error: Pointer access to a non pointer operand.
+Line 13:18 error: Operator '/' with incompatible types.
+Line 14:8 error: Pointer access to a non pointer operand.

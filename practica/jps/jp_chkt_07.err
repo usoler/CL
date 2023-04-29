@@ -1,0 +1,5 @@
+Line 10:2 error: Case instruction requires an expression of type int or char.
+Line 15:7 error: Identifier 'f' is undeclared.
+Line 26:16 error: Operator 'not' with incompatible types.
+Line 37:11 error: Assignment with incompatible types.
+Line 38:11 error: Assignment with incompatible types.

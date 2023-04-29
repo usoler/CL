@@ -1,0 +1,7 @@
+Line 10:2 error: Case instruction requires an expression of type int or char.
+Line 19:13 error: Repeated value in case instruction.
+Line 22:6 error: Repeated value in case instruction.
+Line 23:16 error: Operator 'not' with incompatible types.
+Line 28:16 error: Incompatible value in case instruction.
+Line 34:11 error: Assignment with incompatible types.
+Line 35:11 error: Assignment with incompatible types.

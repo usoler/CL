@@ -59,6 +59,18 @@ done
 echo "=== END examples/jp_chkt_* typecheck =================="
 echo "======================================================="
 
+########### check all 'exam basic' examples
+echo "======================================================="
+echo "=== BEGIN jps/jpbasic_chkt typecheck ============="
+for f in ../jps/jpbasic_chkt_*.asl; do
+    echo -n "****" $(basename "$f") "...." 
+    ./asl "$f" 2>&1 | egrep ^L >tmp.err
+    check_chkt_example "${f/asl/err}" tmp.err 
+    rm -f tmp.err
+done
+echo "=== END jps/jpbasic_chkt typecheck ==============="
+echo "======================================================="
+
 ########### check all 'jpbasic_genc' examples
 echo ""
 echo "======================================================="

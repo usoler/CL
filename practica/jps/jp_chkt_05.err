@@ -1,0 +1,8 @@
+Line 13:4 error: Assignment with incompatible types.
+Line 14:5 error: Operator '+' with incompatible types.
+Line 14:11 error: Array access to a non array operand.
+Line 14:16 error: Operator 'or' with incompatible types.
+Line 17:6 error: Assignment with incompatible types.
+Line 17:8 error: Referenceable expression required in '&'.
+Line 19:14 error: Array access to a non array operand.
+Line 20:2 error: Array access to a non array operand.

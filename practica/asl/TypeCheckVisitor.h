@@ -61,33 +61,45 @@ public:
 
   // Methods to visit each kind of node.
   // Non visited nodes have been commented out:
+  
+  // Program rules
   antlrcpp::Any visitProgram(AslParser::ProgramContext *ctx);
+  
+  // Function rules
   antlrcpp::Any visitFunction(AslParser::FunctionContext *ctx);
-  // antlrcpp::Any visitDeclarations(AslParser::DeclarationsContext *ctx);
-  // antlrcpp::Any visitVariable_decl(AslParser::Variable_declContext *ctx);
-  // antlrcpp::Any visitType(AslParser::TypeContext *ctx);
+  
+  // Statement rules
   antlrcpp::Any visitStatements(AslParser::StatementsContext *ctx);
   antlrcpp::Any visitAssignStmt(AslParser::AssignStmtContext *ctx);
   antlrcpp::Any visitIfStmt(AslParser::IfStmtContext *ctx);
   antlrcpp::Any visitWhileStmt(AslParser::WhileStmtContext *ctx);
-  antlrcpp::Any visitReturnStmt(AslParser::ReturnStmtContext *ctx);
   antlrcpp::Any visitProcCall(AslParser::ProcCallContext *ctx);
   antlrcpp::Any visitReadStmt(AslParser::ReadStmtContext *ctx);
   antlrcpp::Any visitWriteExpr(AslParser::WriteExprContext *ctx);
-  // antlrcpp::Any visitWriteString(AslParser::WriteStringContext *ctx);
+  antlrcpp::Any visitReturnStmt(AslParser::ReturnStmtContext *ctx);
+  
+  // Left expr rules
   antlrcpp::Any visitLeftExprIdent(AslParser::LeftExprIdentContext *ctx);
-  antlrcpp::Any visitExprIdent(AslParser::ExprIdentContext *ctx);
-  antlrcpp::Any visitExprFunc(AslParser::ExprFuncContext *ctx);
+  antlrcpp::Any visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx);
+  
+  // Expr rules
   antlrcpp::Any visitParenthesis(AslParser::ParenthesisContext *ctx);
+  antlrcpp::Any visitExprFunc(AslParser::ExprFuncContext *ctx);
   antlrcpp::Any visitUnary(AslParser::UnaryContext *ctx);
-  antlrcpp::Any visitLogical(AslParser::LogicalContext *ctx);
   antlrcpp::Any visitArithmetic(AslParser::ArithmeticContext *ctx);
   antlrcpp::Any visitRelational(AslParser::RelationalContext *ctx);
-  antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
-  antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
-  antlrcpp::Any visitArray(AslParser::ArrayContext *ctx);
-  antlrcpp::Any visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx);
+  antlrcpp::Any visitLogical(AslParser::LogicalContext *ctx);
   antlrcpp::Any visitArrayAccess(AslParser::ArrayAccessContext *ctx);
+  antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
+  antlrcpp::Any visitExprIdent(AslParser::ExprIdentContext *ctx);
+  
+  // Ident rules
+  antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
+  
+  // Array rules
+  antlrcpp::Any visitArray(AslParser::ArrayContext *ctx);
+  
+  // Function_call rules
   antlrcpp::Any visitFunction_call(AslParser::Function_callContext *ctx);
 
 private:

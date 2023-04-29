@@ -37,16 +37,9 @@ program : function+ EOF
         ;
 
 // A function has a name, a list of parameters and a list of statements
-//function
-//        : FUNC ID '(' (parameters)? ')' (':' type)? declarations statements ENDFUNC
-//        ;
 function
         : FUNC ID '(' ( parameter (',' parameter)* )? ')' (':' basic_type)? declarations statements ENDFUNC
         ;
-        
-//parameters
-//        : parameter (',' parameter)*
-//        ;
         
 parameter
         : ID ':' type
