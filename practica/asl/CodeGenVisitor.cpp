@@ -247,11 +247,10 @@ antlrcpp::Any CodeGenVisitor::visitWhileStmt(AslParser::WhileStmtContext *ctx) {
 antlrcpp::Any CodeGenVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
   DEBUG_ENTER();
   
-  instructionList code;
-  // std::string name = ctx->ident()->ID()->getSymbol()->getText();
-  //std::string name = ctx->ident()->getText();
-  //code = instruction::CALL(name);
-  
+  CodeAttribs &&      codAts = visit(ctx->function_call());
+  std::string          addr = codAts.addr;
+  instructionList &    code = codAts.code;
+    
   DEBUG_EXIT();
   return code;
 }
@@ -493,25 +492,29 @@ antlrcpp::Any CodeGenVisitor::visitRelational(AslParser::RelationalContext *ctx)
     }
   } else {
     // Conversion a floats
+    std::string tempAddr1 = addr1;
+    std::string tempAddr2 = addr2;
     if (Types.isFloatTy(t1)) {
-      code = code || instruction::FLOAT(addr1, addr1);
+      tempAddr1 = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(tempAddr1, addr1);
     } else {
-      code = code || instruction::FLOAT(addr2, addr2);
+      tempAddr2 = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(tempAddr2, addr2);
     }
     
     // Comparacion de floats
     if (ctx->EQUAL()) {
-      code = code || instruction::FEQ(temp, addr1, addr2);
+      code = code || instruction::FEQ(temp, tempAddr1, tempAddr2);
     } else if (ctx->DIFF()) {
-      code = code || instruction::FEQ(temp, addr1, addr2) || instruction::NOT(temp, temp);
+      code = code || instruction::FEQ(temp, tempAddr1, tempAddr2) || instruction::NOT(temp, temp);
     } else if (ctx->GT()) {
-      code = code || instruction::FLT(temp, addr2, addr1);
+      code = code || instruction::FLT(temp, tempAddr2, tempAddr1);
     } else if (ctx->LT()) {
-      code = code || instruction::FLT(temp, addr1, addr2);
+      code = code || instruction::FLT(temp, tempAddr1, tempAddr2);
     } else if (ctx->GTE()) {
-      code = code || instruction::FLE(temp, addr2, addr1);
+      code = code || instruction::FLE(temp, tempAddr2, tempAddr1);
     } else if (ctx->LTE()) {
-      code = code || instruction::FLE(temp, addr1, addr2);
+      code = code || instruction::FLE(temp, tempAddr1, tempAddr2);
     }
   }
   
