@@ -95,11 +95,25 @@ antlrcpp::Any CodeGenVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   subroutine subr(ctx->ID()->getText());
   codeCounters.reset();
   
+  // Return
+  if (ctx->basic_type()) {
+    TypesMgr::TypeId tRet = getTypeDecor(ctx->basic_type());
+    subr.add_param("_result", Types.to_string(tRet));
+  }
+  
+  // Parameters
+  for (auto ctxParam : ctx->parameter()) {
+    var param = visit(ctxParam);
+    subr.add_param(param.name, param.type);
+  }  
+  
+  // Declarations
   std::vector<var> && lvars = visit(ctx->declarations());
   for (auto & onevar : lvars) {
     subr.add_var(onevar);
   }
   
+  // Statements
   instructionList && code = visit(ctx->statements());
   code = code || instruction(instruction::RETURN());
   subr.set_instructions(code);
@@ -108,6 +122,16 @@ antlrcpp::Any CodeGenVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   
   DEBUG_EXIT();
   return subr;
+}
+
+antlrcpp::Any CodeGenVisitor::visitParameter(AslParser::ParameterContext *ctx) {
+  DEBUG_ENTER();
+  
+  TypesMgr::TypeId   t1 = getTypeDecor(ctx->type());
+  std::size_t      size = Types.getSizeOfType(t1);
+  
+  DEBUG_EXIT();
+  return var{ctx->ID()->getText(), Types.to_string(t1), size};
 }
 
 // Declaration rules --------------------------------------------------------------------------------------------------------
@@ -282,8 +306,16 @@ antlrcpp::Any CodeGenVisitor::visitWriteString(AslParser::WriteStringContext *ct
 antlrcpp::Any CodeGenVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx) {
   DEBUG_ENTER();
   
-  instructionList code;
-         
+  instructionList code = instructionList();
+  
+  if (ctx->expr()) {
+    CodeAttribs     && codAt1 = visit(ctx->expr());
+    std::string         addr1 = codAt1.addr;
+    instructionList &   code1 = codAt1.code;
+    
+    code = code || code1 || instruction::LOAD("_result", addr1) || instruction::RETURN();
+  }
+           
   DEBUG_EXIT();
   return code;
 }
@@ -307,20 +339,16 @@ antlrcpp::Any CodeGenVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessCon
 
 antlrcpp::Any CodeGenVisitor::visitParenthesis(AslParser::ParenthesisContext *ctx) {
   DEBUG_ENTER();
-  
   CodeAttribs && codAts = visit(ctx->expr());
-  
   DEBUG_EXIT();
   return codAts;
 }
 
 antlrcpp::Any CodeGenVisitor::visitExprFunc(AslParser::ExprFuncContext *ctx) {
   DEBUG_ENTER();
-  
-  instructionList code;
-  
+  CodeAttribs && codAts = visit(ctx->function_call());
   DEBUG_EXIT();
-  return code;
+  return codAts;
 }
 
 antlrcpp::Any CodeGenVisitor::visitUnary(AslParser::UnaryContext *ctx) {
@@ -584,10 +612,49 @@ antlrcpp::Any CodeGenVisitor::visitArray(AslParser::ArrayContext *ctx) {
 antlrcpp::Any CodeGenVisitor::visitFunction_call(AslParser::Function_callContext *ctx) {
   DEBUG_ENTER();
   
-  instructionList code;
+  std::string funcName = ctx->ident()->getText();
+  TypesMgr::TypeId tFunc = getTypeDecor(ctx->ident()); 
+  
+  instructionList code = instructionList();
+  
+  code = code || instruction::PUSH(); // make space for function result
+  
+  instructionList pushCode = instructionList();
+  instructionList popCode = instructionList();
+
+  int numOfExpr = ctx->expr().size();
+  for (int i=0; i<numOfExpr; ++i) {
+    CodeAttribs     && codAt1 = visit(ctx->expr(i));
+    std::string         addr1 = codAt1.addr;
+    instructionList &   code1 = codAt1.code;
+    
+    code = code || code1;
+    
+    TypesMgr::TypeId tExpr = getTypeDecor(ctx->expr(i));
+    TypesMgr::TypeId tParam = Types.getParameterType(tFunc, i);
+    
+    if (Types.isIntegerTy(tExpr) and Types.isFloatTy(tParam)) {
+      std::string tempAddr1 = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(tempAddr1, addr1);
+    } else if (Types.isArrayTy(tParam)) {
+      std::string tempAddr1 = "%" + codeCounters.newTEMP();
+      code = code || instruction::ALOAD(tempAddr1, addr1);
+    }
+
+    pushCode = pushCode || instruction::PUSH(addr1);
+    popCode = popCode || instruction::POP();
+  }
+  
+  code = code || pushCode || instruction::CALL(funcName) || popCode;
+  
+  std::string temp = "%"+codeCounters.newTEMP();
+  
+  code = code || instruction::POP(temp); // pop result and store it in temp
+  
+  CodeAttribs codAts(temp, "", code);
   
   DEBUG_EXIT();
-  return code;
+  return codAts;
 }
 
 
