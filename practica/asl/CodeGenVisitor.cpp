@@ -187,8 +187,10 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   
   instructionList &&   code2 = visit(ctx->statements(0));
   
+  // TODO: MISSING 'ELSE' CODE
+  
   std::string label = codeCounters.newLabelIF();
-  std::string labelEndIf = "endif"+label;
+  std::string labelEndIf = "endif" + label;
   
   code = code1 || instruction::FJUMP(addr1, labelEndIf) ||
          code2 || instruction::LABEL(labelEndIf);
@@ -201,6 +203,18 @@ antlrcpp::Any CodeGenVisitor::visitWhileStmt(AslParser::WhileStmtContext *ctx) {
   DEBUG_ENTER();
   
   instructionList code;
+  
+  CodeAttribs     && codAtsE = visit(ctx->expr());
+  std::string          addr1 = codAtsE.addr;
+  instructionList &    code1 = codAtsE.code;
+  
+  instructionList &&   code2 = visit(ctx->statements());
+  
+  std::string label = codeCounters.newLabelWHILE();
+  std::string labelWhile = "while" + label;
+  std::string labelEndWhile = "endwhile" + label;
+  
+  code = instruction::LABEL(labelWhile) || code1 || instruction::FJUMP(addr1, labelEndWhile) || code2 || instruction::UJUMP(labelWhile) || instruction::LABEL(labelEndWhile);
          
   DEBUG_EXIT();
   return code;
