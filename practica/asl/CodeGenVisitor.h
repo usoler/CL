@@ -69,6 +69,7 @@ public:
   
   // Function rules
   antlrcpp::Any visitFunction(AslParser::FunctionContext *ctx);
+  antlrcpp::Any visitParameter(AslParser::ParameterContext *ctx);
   
   // Declaration rules
   antlrcpp::Any visitDeclarations(AslParser::DeclarationsContext *ctx);
