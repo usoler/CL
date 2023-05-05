@@ -251,44 +251,52 @@ antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ct
 }
 
 // Left expr rules --------------------------------------------------------------------------------------------------------------------------------------------------------------
-antlrcpp::Any TypeCheckVisitor::visitLeftExprIdent(AslParser::LeftExprIdentContext *ctx) {
-  DEBUG_ENTER();
-  
-  // Visita el identificador
-  visit(ctx->ident());
-  
-  // Asigna el mismo tipo que el del identificador
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  putTypeDecor(ctx, t1);
-  
-  // Asigna el mismo isLValue que el del identificador
-  bool b = getIsLValueDecor(ctx->ident());
-  putIsLValueDecor(ctx, b);
-  
-  DEBUG_EXIT();
-  return 0;
-}
-
-antlrcpp::Any TypeCheckVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx) {
-  DEBUG_ENTER();
-  
-  // Visita el identificador
-  visit(ctx->array());
-  
-  // Coge el tipo del identificador
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->array());
-  
-  // Asigna el mismo tipo del identificador al ArrayAccess
-  putTypeDecor(ctx, t1);
-  
-  // Coge el isLValue del identificador
-  bool b = getIsLValueDecor(ctx->array());
-  
-  // Asigna el mismo isLValue del identificador al ArrayAccess
-  putIsLValueDecor(ctx, b);
-  
-  DEBUG_EXIT();
-  return 0;
+antlrcpp::Any TypeCheckVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx) {
+    DEBUG_ENTER();
+    
+    // Visita el identificador
+    visit(ctx->ident());
+    
+    // Coge el tipo del identificador
+    TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+    
+    if (ctx->expr()) {
+      // Comprueba si no es un tipo error ni un tipo array, entonces lanza error
+      if (not Types.isErrorTy(t1) and not Types.isArrayTy(t1)) {
+          Errors.nonArrayInArrayAccess(ctx);
+      }
+    
+      // Visita la expresion
+      visit(ctx->expr());
+      
+      // Coge el tipo de la expresion
+      TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
+      
+      // Comprueba si no es un tipo error ni un tipo entero
+      if (not Types.isErrorTy(t2) and not Types.isIntegerTy(t2)) {
+          Errors.nonIntegerIndexInArrayAccess(ctx->expr());
+      }
+      
+      // Asigna el tipo y si es isLValue al array
+      TypesMgr::TypeId t3 = Types.createErrorTy();
+      bool isLValue = false;
+      
+      if (Types.isArrayTy(t1)) {
+          t3 = Types.getArrayElemType(t1);
+          isLValue = true;
+      }
+      
+      putTypeDecor(ctx, t3);
+      putIsLValueDecor(ctx, isLValue);
+    } else {
+      bool isLValue = getIsLValueDecor(ctx->ident());
+      
+      putTypeDecor(ctx, t1);
+      putIsLValueDecor(ctx, isLValue);
+    }
+    
+    DEBUG_EXIT();
+    return 0;
 }
 
 // Expr rules ---------------------------------------------------------------------------------------------------------------------------------------------------------------------

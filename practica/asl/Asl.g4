@@ -88,10 +88,11 @@ statement
         ;
 
 // Grammar for left expressions (l-values in C++)
-left_expr
-        : ident                                         # leftExprIdent
-        | array                                         # leftArrayAccess
-        ;
+// left_expr
+//         : ident                                         # leftExprIdent
+//         | array                                         # leftArrayAccess
+//         ;
+left_expr : ident ('[' expr ']')? ;
 
 // Grammar for expressions with boolean, relational and aritmetic operators
 expr    : L_PAR expr R_PAR                              # parenthesis

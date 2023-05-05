@@ -79,8 +79,7 @@ public:
   antlrcpp::Any visitReturnStmt(AslParser::ReturnStmtContext *ctx);
   
   // Left expr rules
-  antlrcpp::Any visitLeftExprIdent(AslParser::LeftExprIdentContext *ctx);
-  antlrcpp::Any visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx);
+  antlrcpp::Any visitLeft_expr(AslParser::Left_exprContext *ctx);
   
   // Expr rules
   antlrcpp::Any visitParenthesis(AslParser::ParenthesisContext *ctx);
