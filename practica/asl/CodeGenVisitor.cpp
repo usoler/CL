@@ -195,10 +195,6 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
   std::string           offs1  = codAtsE1.offs;
   instructionList &     code1 = codAtsE1.code;
   TypesMgr::TypeId tLeft = getTypeDecor(ctx->left_expr());
-
-  if (ctx->left_expr()->expr()) {
-    tLeft = getTypeDecor(ctx->left_expr()->ident());
-  }
   
   // Right expr
   CodeAttribs     && codAtsE2 = visit(ctx->expr());
@@ -209,15 +205,28 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
   
   code = code1 || code2;
   
-  // TODO: handle floats
+  if (Types.isFloatTy(tLeft) and Types.isIntegerTy(tRight)) {
+    std::string temp = "%"+codeCounters.newTEMP();;
+    code = code || instruction::FLOAT(temp, addr2);
+    addr2 = temp;
+  }
+  
+  if (ctx->left_expr()->expr()) {
+    tLeft = getTypeDecor(ctx->left_expr()->ident());
+  }
+  
   if (Types.isArrayTy(tLeft) and not Types.isArrayTy(tRight)) {
     code = code || instruction::XLOAD(addr1, offs1, addr2);
   } else if (not Types.isArrayTy(tLeft) and Types.isArrayTy(tRight)) {
     code = code || instruction::LOADX(addr1, addr2, offs2);
   } else if (Types.isArrayTy(tLeft) and Types.isArrayTy(tRight)) {
     // TODO: define
+  } else if (Types.isFloatTy(tRight)) {
+    code = code || instruction::FLOAD(addr1,addr2);
+  } else if (Types.isCharacterTy(tRight)) {
+    code = code || instruction::CHLOAD(addr1,addr2);
   } else {
-    code = code || instruction::LOAD(addr1,addr2);
+    code = code || instruction::ILOAD(addr1,addr2);
   }
   
   DEBUG_EXIT();
@@ -288,13 +297,31 @@ antlrcpp::Any CodeGenVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
 
 antlrcpp::Any CodeGenVisitor::visitReadStmt(AslParser::ReadStmtContext *ctx) {
   DEBUG_ENTER();
+  
   CodeAttribs     && codAtsE = visit(ctx->left_expr());
   std::string          addr1 = codAtsE.addr;
-  // std::string          offs1 = codAtsE.offs;
+  std::string          offs1 = codAtsE.offs;
   instructionList &    code1 = codAtsE.code;
+  
   instructionList &     code = code1;
-  // TypesMgr::TypeId tid1 = getTypeDecor(ctx->left_expr());
-  code = code1 || instruction::READI(addr1);
+  
+  TypesMgr::TypeId tid = getTypeDecor(ctx->left_expr());
+  
+  if (ctx->left_expr()->expr()) {
+    tid = getTypeDecor(ctx->left_expr()->ident());
+  }
+  
+  if (Types.isArrayTy(tid)) {
+    std::string tempAddr1 = "%"+codeCounters.newTEMP();
+    code = code || instruction::READI(tempAddr1) || instruction::XLOAD(addr1, offs1, tempAddr1);
+  } else if (Types.isFloatTy(tid)) {
+    code = code || instruction::READF(addr1);
+  } else if (Types.isCharacterTy(tid)) {
+    code = code || instruction::READC(addr1);
+  } else {
+    code = code || instruction::READI(addr1);
+  }
+  
   DEBUG_EXIT();
   return code;
 }
