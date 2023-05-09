@@ -226,7 +226,30 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
   bool exprIsArrayTy = (offs2 != "");
 
   if (Types.isArrayTy(tLeft) and not exprIsArrayTy) {
-    code = code || instruction::XLOAD(addr1, offs1, addr2);
+    if (offs1 != "") {
+      code = code || instruction::XLOAD(addr1, offs1, addr2);
+    } else {
+      // Array assignment
+      if (Symbols.isParameterClass(addr1)) { // por referencia
+        std::string temp = "%"+codeCounters.newTEMP();
+        code = code || instruction::LOAD(temp, addr1);
+        addr1 = temp;
+      }
+      
+      if (Symbols.isParameterClass(addr2)) { // por referencia
+        std::string temp = "%"+codeCounters.newTEMP();
+        code = code || instruction::LOAD(temp, addr2);
+        addr2 = temp;
+      }
+            
+      int arraySize = Types.getArraySize(tLeft);
+      std::string tempOffs = "%"+codeCounters.newTEMP();
+      std::string tempRight = "%"+codeCounters.newTEMP();
+      for (int i=0; i<arraySize; ++i) {
+        std::string index = std::to_string(i);
+        code = code || instruction::ILOAD(tempOffs, index) || instruction::LOADX(tempRight, addr2, tempOffs) || instruction::XLOAD(addr1, tempOffs, tempRight);
+      }
+    }
   } else if (not Types.isArrayTy(tLeft) and exprIsArrayTy) {
     code = code || instruction::LOADX(addr1, addr2, offs2);
   } else if (Types.isArrayTy(tLeft) and exprIsArrayTy) {
