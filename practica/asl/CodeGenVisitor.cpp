@@ -782,7 +782,9 @@ antlrcpp::Any CodeGenVisitor::visitValue(AslParser::ValueContext *ctx) {
   } else if (ctx->FLOATVAL()) {
     code = instruction::FLOAD(temp, ctx->getText());
   } else if (ctx->CHARVAL()) {
-    code = instruction::CHLOAD(temp, ctx->getText());
+    std::string value = ctx->getText();
+    value = value.substr(1, value.size()-2);
+    code = instruction::CHLOAD(temp, value);
   } else if (ctx->BOOLVAL()) {
     std::string value = "1";
     if (ctx->getText() == "false") {
