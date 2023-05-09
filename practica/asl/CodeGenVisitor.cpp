@@ -251,6 +251,12 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
       }
     }
   } else if (not Types.isArrayTy(tLeft) and exprIsArrayTy) {
+    if (Symbols.isParameterClass(addr2)) { // por referencia
+        std::string temp = "%"+codeCounters.newTEMP();
+        code = code || instruction::LOAD(temp, addr2);
+        addr2 = temp;
+    }
+    
     code = code || instruction::LOADX(addr1, addr2, offs2);
   } else if (Types.isArrayTy(tLeft) and exprIsArrayTy) {
     std::string tempRight = "%"+codeCounters.newTEMP();
@@ -274,7 +280,20 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   
   CodeAttribs     && codAtsE = visit(ctx->expr());
   std::string          addr1 = codAtsE.addr;
+  std::string          offs1 = codAtsE.offs;
   instructionList &    conditionCode = codAtsE.code;
+  
+  code = code || conditionCode;
+  
+  if (offs1 != "") {
+    if (Symbols.isParameterClass(addr1)) { // por referencia
+      std::string temp = "%"+codeCounters.newTEMP();
+      code = code || instruction::LOAD(temp, addr1);
+      addr1 = temp;
+    }
+    
+    code = code || instruction::LOADX(addr1, addr1, offs1);
+  }
   
   instructionList &&   thenCode = visit(ctx->statements(0));
   
@@ -285,12 +304,12 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   if (ctx->ELSE()) {
     instructionList && elseCode = visit(ctx->statements(1));
     
-    code = conditionCode || instruction::FJUMP(addr1, labelElse) 
+    code = code || instruction::FJUMP(addr1, labelElse) 
     || thenCode || instruction::UJUMP(labelEndIf) 
     || instruction::LABEL(labelElse) || elseCode
     || instruction::LABEL(labelEndIf);
   } else {
-    code = conditionCode || instruction::FJUMP(addr1, labelEndIf) || thenCode || instruction::LABEL(labelEndIf);
+    code = code || instruction::FJUMP(addr1, labelEndIf) || thenCode || instruction::LABEL(labelEndIf);
   }
          
   DEBUG_EXIT();
@@ -372,6 +391,8 @@ antlrcpp::Any CodeGenVisitor::visitWriteExpr(AslParser::WriteExprContext *ctx) {
   
   instructionList &   code = code1;
   
+  TypesMgr::TypeId tid1 = getTypeDecor(ctx->expr());
+
   std::string temp = addr1;
   if (offs1 != "") {
     temp = "%"+codeCounters.newTEMP();
@@ -381,10 +402,9 @@ antlrcpp::Any CodeGenVisitor::visitWriteExpr(AslParser::WriteExprContext *ctx) {
     } else {
       std::string temp2 = "%"+codeCounters.newTEMP();
       code = code || instruction::LOAD(temp2, addr1) || instruction::LOADX(temp, temp2, offs1);
-    }
+    }    
   }
     
-  TypesMgr::TypeId tid1 = getTypeDecor(ctx->expr());
   if (Types.isFloatTy(tid1)) {
     code = code || instruction::WRITEF(temp);
   } else if (Types.isCharacterTy(tid1)) {
@@ -667,7 +687,7 @@ antlrcpp::Any CodeGenVisitor::visitRelational(AslParser::RelationalContext *ctx)
   
   std::string temp = "%"+codeCounters.newTEMP();
   
-  if (Types.isIntegerTy(t1) and Types.isIntegerTy(t2)) {
+  if (not Types.isFloatTy(t1) and not Types.isFloatTy(t2)) {
     // Comparacion de enteros
     if (ctx->EQUAL()) {
       code = code || instruction::EQ(temp, addr1, addr2);
