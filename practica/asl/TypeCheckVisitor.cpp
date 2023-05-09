@@ -453,21 +453,51 @@ antlrcpp::Any TypeCheckVisitor::visitLogical(AslParser::LogicalContext *ctx) {
 }
 
 antlrcpp::Any TypeCheckVisitor::visitArrayAccess(AslParser::ArrayAccessContext *ctx) {
-  DEBUG_ENTER();
-  
-  // Visita el identificador
-  visit(ctx->array());
-  
-  // Asigna el mismo tipo del identificador al ArrayAccess
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->array());
-  putTypeDecor(ctx, t1);
-  
-  // Asigna el mismo isLValue del identificador al ArrayAccess
-  bool b = getIsLValueDecor(ctx->array());  
-  putIsLValueDecor(ctx, b);
-  
-  DEBUG_EXIT();
-  return 0;
+    DEBUG_ENTER();
+    
+    // Visita el identificador
+    visit(ctx->ident());
+    
+    // Coge el tipo del identificador
+    TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+    
+    if (ctx->expr()) {
+      // Comprueba si no es un tipo error ni un tipo array, entonces lanza error
+      if (not Types.isErrorTy(t1) and not Types.isArrayTy(t1)) {
+          Errors.nonArrayInArrayAccess(ctx);
+      }
+    
+      // Visita la expresion
+      visit(ctx->expr());
+      
+      // Coge el tipo de la expresion
+      TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
+      
+      // Comprueba si no es un tipo error ni un tipo entero
+      if (not Types.isErrorTy(t2) and not Types.isIntegerTy(t2)) {
+          Errors.nonIntegerIndexInArrayAccess(ctx->expr());
+      }
+      
+      // Asigna el tipo y si es isLValue al array
+      TypesMgr::TypeId t3 = Types.createErrorTy();
+      bool isLValue = false;
+      
+      if (Types.isArrayTy(t1)) {
+          t3 = Types.getArrayElemType(t1);
+          isLValue = true;
+      }
+      
+      putTypeDecor(ctx, t3);
+      putIsLValueDecor(ctx, isLValue);
+    } else {
+      bool isLValue = getIsLValueDecor(ctx->ident());
+      
+      putTypeDecor(ctx, t1);
+      putIsLValueDecor(ctx, isLValue);
+    }
+    
+    DEBUG_EXIT();
+    return 0;
 }
 
 antlrcpp::Any TypeCheckVisitor::visitValue(AslParser::ValueContext *ctx) {
@@ -532,49 +562,6 @@ antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
   }
   DEBUG_EXIT();
   return 0;
-}
-
-// Array rules ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-antlrcpp::Any TypeCheckVisitor::visitArray(AslParser::ArrayContext *ctx) {
-    DEBUG_ENTER();
-    
-    // Visita el identificador
-    visit(ctx->ident());
-    
-    // Coge el tipo del identificador
-    TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-    
-    // Comprueba si no es un tipo error ni un tipo array, entonces lanza error
-    if (not Types.isErrorTy(t1) and not Types.isArrayTy(t1)) {
-        Errors.nonArrayInArrayAccess(ctx);
-    }
-    
-    // Visita la expresion
-    visit(ctx->expr());
-    
-    // Coge el tipo de la expresion
-    TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
-    
-    // Comprueba si no es un tipo error ni un tipo entero
-    if (not Types.isErrorTy(t2) and not Types.isIntegerTy(t2)) {
-        Errors.nonIntegerIndexInArrayAccess(ctx->expr());
-    }
-    
-    // Asigna el tipo y si es isLValue al array
-    TypesMgr::TypeId t3 = Types.createErrorTy();
-    bool isLValue = false;
-    
-    if (Types.isArrayTy(t1)) {
-        t3 = Types.getArrayElemType(t1);
-        isLValue = true;
-    }
-    
-    putTypeDecor(ctx, t3);
-    putIsLValueDecor(ctx, isLValue);
-    
-    
-    DEBUG_EXIT();
-    return 0;
 }
 
 // Function_call rules ----------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -103,9 +103,6 @@ public:
   // Ident rules
   antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
   
-  // Array rules
-  antlrcpp::Any visitArray(AslParser::ArrayContext *ctx);
-  
   // Function_call rules
   antlrcpp::Any visitFunction_call(AslParser::Function_callContext *ctx); // NEW
 
