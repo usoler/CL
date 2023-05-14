@@ -213,6 +213,10 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
 
   code = code1 || code2;
   
+  if (Types.isFunctionTy(tRight)) {
+    tRight = Types.getFuncReturnType(tRight);
+  }
+  
   if (Types.isFloatTy(tLeft) and Types.isIntegerTy(tRight)) {
     std::string temp = "%"+codeCounters.newTEMP();
     code = code || instruction::FLOAT(temp, addr2);
@@ -259,6 +263,18 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
     
     code = code || instruction::LOADX(addr1, addr2, offs2);
   } else if (Types.isArrayTy(tLeft) and exprIsArrayTy) {
+    if (Symbols.isParameterClass(addr1)) { // por referencia
+      std::string temp = "%"+codeCounters.newTEMP();
+      code = code || instruction::LOAD(temp, addr1);
+      addr1 = temp;
+    }
+    
+    if (Symbols.isParameterClass(addr2)) { // por referencia
+      std::string temp = "%"+codeCounters.newTEMP();
+      code = code || instruction::LOAD(temp, addr2);
+      addr2 = temp;
+    }
+      
     std::string tempRight = "%"+codeCounters.newTEMP();
     code = code || instruction::LOADX(tempRight, addr2, offs2) || instruction::XLOAD(addr1, offs1, tempRight);
   } else if (Types.isFloatTy(tRight)) {
@@ -439,6 +455,8 @@ antlrcpp::Any CodeGenVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx)
     instructionList &   code1 = codAt1.code;
     
     code = code || code1 || instruction::LOAD("_result", addr1) || instruction::RETURN();
+  } else {
+    code = instruction::RETURN();
   }
            
   DEBUG_EXIT();
@@ -706,14 +724,17 @@ antlrcpp::Any CodeGenVisitor::visitRelational(AslParser::RelationalContext *ctx)
     // Conversion a floats
     std::string tempAddr1 = addr1;
     std::string tempAddr2 = addr2;
-    if (Types.isFloatTy(t1)) {
-      tempAddr2 = "%" + codeCounters.newTEMP();
-      code = code || instruction::FLOAT(tempAddr2, addr2);
-    } else {
+
+    if (not Types.isFloatTy(t1)) {
       tempAddr1 = "%" + codeCounters.newTEMP();
       code = code || instruction::FLOAT(tempAddr1, addr1);
     }
     
+    if (not Types.isFloatTy(t2)) {
+      tempAddr2 = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(tempAddr2, addr2);
+    } 
+
     // Comparacion de floats
     if (ctx->EQUAL()) {
       code = code || instruction::FEQ(temp, tempAddr1, tempAddr2);
@@ -890,7 +911,7 @@ antlrcpp::Any CodeGenVisitor::visitFunction_call(AslParser::Function_callContext
     if (Types.isIntegerTy(tExpr) and Types.isFloatTy(tParam)) {
       tempAddr1 = "%" + codeCounters.newTEMP();
       code = code || instruction::FLOAT(tempAddr1, addr1);
-    } else if (Types.isArrayTy(tParam)) {
+    } else if (Types.isArrayTy(tParam) and Symbols.isLocalVarClass(addr1)) {
       tempAddr1 = "%" + codeCounters.newTEMP();
       code = code || instruction::ALOAD(tempAddr1, addr1);
     }
