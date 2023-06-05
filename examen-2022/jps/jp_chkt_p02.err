@@ -1,0 +1,2 @@
+Line 2:9 error: Identifier 'x' is undeclared.
+Line 2:12 error: Operator '>' with incompatible types.
